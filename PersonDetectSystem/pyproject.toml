@@ -1,0 +1,15 @@
+[project]
+name = "repl-nix-workspace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.122.0",
+    "jinja2>=3.1.6",
+    "mediapipe>=0.10.21",
+    "numpy>=1.26.4",
+    "opencv-python>=4.11.0.86",
+    "pillow>=12.0.0",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.38.0",
+]

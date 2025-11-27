@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Person Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            margin-right: 20px;
+            transition: color 0.3s;
+        }
+        
+        .nav a:hover {
+            color: #764ba2;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .status-queued {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .status-processing {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .status-matching {
+            background: #007bff;
+            color: white;
+        }
+        
+        .status-found {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-completed {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .match-preview {
+            margin-top: 15px;
+        }
+        
+        .match-preview img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Missing Person Detection System</h1>
+            <p>Report missing persons and track their status</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">User Portal</a>
+            <a href="/admin/login">Admin Dashboard</a>
+        </div>
+        
+        <div class="content">
+            <div class="form-section">
+                <h2>Report Missing Person</h2>
+                <div id="alert" class="hidden"></div>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="age">Age *</label>
+                        <input type="number" id="age" name="age" min="1" max="120" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact">Contact Number *</label>
+                        <input type="text" id="contact" name="contact" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" placeholder="Physical description, clothing, etc."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Last Seen Location *</label>
+                        <input type="text" id="location" name="location" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="image">Photo of Missing Person *</label>
+                        <input type="file" id="image" name="image" accept="image/*" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">Submit Report</button>
+                </form>
+            </div>
+            
+            <div class="status-section">
+                <h2>Check Case Status</h2>
+                <div class="form-group">
+                    <label for="caseId">Enter Case ID</label>
+                    <input type="text" id="caseId" placeholder="e.g., abc123de">
+                </div>
+                <button onclick="checkStatus()" class="btn">Check Status</button>
+                
+                <div id="statusResult" class="hidden status-card"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const alertDiv = document.getElementById('alert');
+            
+            try {
+                const response = await fetch('/api/user/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.innerHTML = `
+                        <strong>Success!</strong><br>
+                        ${result.message}<br>
+                        <strong>Your Case ID: ${result.case_id}</strong><br>
+                        Please save this Case ID to track your case status.
+                    `;
+                    e.target.reset();
+                } else {
+                    alertDiv.className = 'alert alert-error';
+                    alertDiv.innerHTML = `<strong>Error:</strong> ${result.message}`;
+                }
+                
+                alertDiv.classList.remove('hidden');
+                alertDiv.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                alertDiv.className = 'alert alert-error';
+                alertDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                alertDiv.classList.remove('hidden');
+            }
+        });
+        
+        async function checkStatus() {
+            const caseId = document.getElementById('caseId').value.trim();
+            const resultDiv = document.getElementById('statusResult');
+            
+            if (!caseId) {
+                alert('Please enter a Case ID');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/user/status/${caseId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Case not found');
+                }
+                
+                const data = await response.json();
+                
+                let statusClass = 'status-queued';
+                if (data.status === 'PROCESSING') statusClass = 'status-processing';
+                if (data.status === 'MATCHING') statusClass = 'status-matching';
+                if (data.status === 'PERSON FOUND') statusClass = 'status-found';
+                if (data.status === 'COMPLETED') statusClass = 'status-completed';
+                
+                let html = `
+                    <h3>Case: ${data.name}</h3>
+                    <p><strong>Case ID:</strong> ${data.case_id}</p>
+                    <p><strong>Age:</strong> ${data.age}</p>
+                    <p><strong>Last Seen:</strong> ${data.location}</p>
+                    <span class="status-badge ${statusClass}">${data.status}</span>
+                `;
+                
+                if (data.status === 'PERSON FOUND') {
+                    html += `
+                        <div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 5px;">
+                            <strong>Person found at ${data.match_place || 'unknown location'}.</strong><br>
+                            Waiting for police confirmation. If confirmed, you will be contacted.
+                        </div>
+                    `;
+                    
+                    if (data.matches && data.matches.length > 0) {
+                        html += '<div class="match-preview">';
+                        data.matches.forEach(match => {
+                            html += `
+                                <p><strong>Timestamp:</strong> ${match.timestamp} | 
+                                <strong>Confidence:</strong> ${(match.similarity * 100).toFixed(1)}%</p>
+                                <img src="/${match.frame_path}" alt="Matched frame">
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                }
+                
+                if (data.status === 'COMPLETED') {
+                    html += `
+                        <div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 5px;">
+                            <strong>Case Completed.</strong><br>
+                            Match confirmed by authorities. Contact information has been shared.
+                        </div>
+                    `;
+                }
+                
+                resultDiv.innerHTML = html;
+                resultDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

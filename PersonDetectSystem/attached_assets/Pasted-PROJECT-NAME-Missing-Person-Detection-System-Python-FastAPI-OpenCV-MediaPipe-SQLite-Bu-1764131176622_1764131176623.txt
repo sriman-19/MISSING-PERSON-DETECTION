@@ -1,0 +1,181 @@
+PROJECT NAME: Missing Person Detection System (Python + FastAPI + OpenCV + MediaPipe + SQLite)
+
+Build a full-stack Python web application using FastAPI that allows users to report missing persons and lets admins upload videos to detect and match faces automatically. Use OpenCV for video frame extraction, MediaPipe for face detection and embeddings, and SQLite for persistent storage. Include **user notification workflow when a person is found**, with police confirmation.
+
+==================================================
+1️⃣ USER SIDE
+==================================================
+
+Purpose: Users report missing persons and track case status. Notify them if a possible match is found.
+
+**UI / Features:**
+- Upload Form:
+    - Image of missing person
+    - Name
+    - Age
+    - Contact Number
+    - Description
+    - Last Seen Location
+    - Submit Button
+- Status Section:
+    - Shows Case ID
+    - Current Status:
+        - QUEUED → Case received
+        - PROCESSING → Admin processing videos
+        - MATCHING → Faces being compared
+        - COMPLETED → Case processed
+        - PERSON FOUND → Match found in video (pending police confirmation)
+    - If PERSON FOUND:
+        - Display message:  
+          `"Person found at <place>. Waiting for police confirmation. If confirmed, you will be contacted."`
+        - Optional: show matched frame preview
+    - Confidence score and timestamps of match (optional)
+
+**Backend Workflow:**
+1. Accept form submission + uploaded image
+2. Generate unique `case_id`
+3. Save user details + image path + embedding placeholder + status = QUEUED in SQLite (`users_cases` table)
+4. Return `case_id` to user
+5. User queries `/status/{case_id}`:
+    - If status = PERSON FOUND → return message above with place info
+    - If status = COMPLETED → return match details (if confirmed)
+6. User does not handle embedding/video processing; all is admin-side
+
+**API Routes:**
+- POST `/api/user/upload` → Save user data + image in SQLite → return `{ case_id: "…" }`
+- GET `/api/user/status/{case_id}` → Return current status, confidence, timestamps, place info if PERSON FOUND
+
+---
+
+==================================================
+2️⃣ ADMIN SIDE
+==================================================
+
+Purpose: Admin uploads videos, detects faces, generates embeddings, compares with user cases, and updates results in SQLite. Admin also marks if match requires police confirmation.
+
+**UI / Dashboard Layout:**
+- Left Panel: Video preview player (HTML5)
+- Right Panel: Uploaded video list
+- Below Video: Matches Found Section
+    - Matched frame images
+    - Timestamp
+    - Similarity score
+    - Status: Waiting for police confirmation
+- Progress Bar: Shows processing status
+
+**Backend Workflow:**
+1. Admin uploads video → saved in `/uploads/videos/`
+2. OpenCV extracts frames (5–10 FPS)
+3. MediaPipe detects faces + generates embeddings
+4. Compare frame embeddings with all **pending user cases** (status != COMPLETED or PERSON FOUND)
+5. If similarity ≥ 0.75:
+    - Save matched frame → `/admin_results/{case_id}/found_frames/`
+    - Insert match into `matches` table (case_id, frame_path, timestamp, similarity)
+    - Update `users_cases.status` = PERSON FOUND
+    - Record location/place where match was detected
+6. Admin can mark match as **police confirmed** later → update `users_cases.status` = COMPLETED
+7. Admin dashboard shows matched frames + timestamps + similarity + pending police confirmation
+
+**API Routes:**
+- POST `/api/admin/uploadVideo` → Upload video → process frames → generate embeddings → compare → update SQLite
+- GET `/api/admin/getResults/{case_id}` → Return matched frames, timestamps, similarity, status, and location/place info
+
+---
+
+==================================================
+3️⃣ DATABASE STRUCTURE (SQLite)
+==================================================
+
+Tables:
+
+1. `users_cases`:
+| Column       | Type    | Description |
+|--------------|---------|-------------|
+| case_id      | TEXT PRIMARY KEY | Unique case ID |
+| name         | TEXT    | User name |
+| age          | INTEGER | Age |
+| contact      | TEXT    | Contact number |
+| description  | TEXT    | Description |
+| location     | TEXT    | Last seen location |
+| image_path   | TEXT    | Path to uploaded image |
+| embedding    | BLOB    | Serialized embedding vector |
+| status       | TEXT    | QUEUED / PROCESSING / MATCHING / PERSON FOUND / COMPLETED |
+| match_place  | TEXT    | Location/place where match detected (optional) |
+
+2. `matches`:
+| Column       | Type    | Description |
+|--------------|---------|-------------|
+| match_id     | INTEGER PRIMARY KEY AUTOINCREMENT | Unique ID |
+| case_id      | TEXT    | Foreign key to users_cases |
+| frame_path   | TEXT    | Matched frame image path |
+| timestamp    | TEXT    | Video timestamp |
+| similarity   | REAL    | Cosine similarity score |
+
+---
+
+==================================================
+4️⃣ EMBEDDING & MATCHING
+==================================================
+
+- MediaPipe Tasks API:
+  - Face Detection
+  - Face Landmarker
+  - Face Embedder
+- Cosine similarity:
+  similarity = dot(A,B) / (||A|| * ||B||)
+- Threshold: 0.75 → considered a potential match
+
+---
+
+==================================================
+5️⃣ WORKFLOW SUMMARY
+==================================================
+
+1. User uploads missing person details → saved in SQLite → case_id returned  
+2. Admin uploads video → OpenCV extracts frames → MediaPipe embeddings → compare with pending cases  
+3. If similarity ≥ 0.75 → save matched frame → mark `users_cases.status` = PERSON FOUND → record location/place  
+4. User checks `/status/{case_id}` → sees message:  
+   `"Person found at <place>. Waiting for police confirmation. If confirmed, you will be contacted."`  
+5. Once admin confirms with police → update `users_cases.status` = COMPLETED  
+6. User is notified after confirmation  
+7. Admin dashboard shows matched frames, timestamps, similarity, and confirmation status  
+
+---
+
+==================================================
+6️⃣ FOLDER STRUCTURE
+==================================================
+
+/uploads/images → Uploaded user photos  
+/uploads/videos → Admin-uploaded videos  
+/admin_results/{case_id}/found_frames → Matched frames  
+/database.sqlite → SQLite database  
+
+---
+
+==================================================
+7️⃣ TECH STACK
+==================================================
+
+- Python 3.10+  
+- FastAPI  
+- OpenCV (video processing + frame extraction)  
+- MediaPipe (face detection + embedding)  
+- SQLite (persistent storage, concurrency-safe)  
+- Frontend: FastAPI templates / minimal HTML, dashboard  
+
+---
+
+==================================================
+8️⃣ OUTPUT EXPECTATION
+==================================================
+
+Generate Python code that includes:
+- User upload + status tracking (including PERSON FOUND message and police confirmation workflow)  
+- Admin video upload + frame extraction using OpenCV  
+- MediaPipe face detection + embedding extraction  
+- Cosine similarity matching  
+- Admin dashboard showing matched frames, timestamps, similarity, and confirmation status  
+- Auto-update of case status in SQLite  
+- Persistent storage of matches and match locations  
+- Fully working, scalable Python FastAPI application
